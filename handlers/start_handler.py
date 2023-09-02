@@ -3,7 +3,7 @@ from aiogram import Router
 from aiogram.filters import StateFilter
 from aiogram.filters.command import CommandStart
 from aiogram.fsm.context import FSMContext
-from aiogram.types import Message, ContentType
+from aiogram.types import Message, ContentType, CallbackQuery
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from filters.start_filters import StatusInMessage
@@ -22,8 +22,8 @@ router = Router()
 @router.message(CommandStart())
 async def command_start_handler(message: Message, state: FSMContext, session: AsyncSession) -> None:
     if message.from_user.id in load_config().tg_bot.admin_ids:
-        await state.set_state(Admin.join)
-        await message.answer(text=LEXICON_RU['menu_message'], reply_markup=callback_map_admin['menu'])
+        await state.set_state(Admin.pick)
+        await message.answer(text='Вы админ. Выберите режим работы с ботом', reply_markup=callback_map_admin['pick'])
         return
     user = await get_user_by_tg_id(session=session, user_id=message.from_user.id)
     if user is None:
@@ -32,6 +32,23 @@ async def command_start_handler(message: Message, state: FSMContext, session: As
     else:
         await message.answer(text=LEXICON_RU[user.status]['return'], reply_markup=menu_keyboard[user.status])
 
+
+@router.callback_query(StateFilter(Admin.pick), F.data == 'pick_user')
+async def picked_user(callback: CallbackQuery, state: FSMContext, session: AsyncSession):
+    await state.clear()
+    user = await get_user_by_tg_id(session=session, user_id=callback.from_user.id)
+    if user is None:
+        await state.set_state(Start.registration)
+        await callback.message.answer(text=LEXICON_RU['register'], reply_markup=start_keyboard)
+    else:
+        await callback.message.answer(text=LEXICON_RU[user.status]['return'], reply_markup=menu_keyboard[user.status])
+    await callback.message.delete()
+
+@router.callback_query(StateFilter(Admin.pick), F.data == 'pick_admin')
+async def picked_user(callback: CallbackQuery, state: FSMContext):
+    await state.set_state(Admin.join)
+    await callback.message.answer(text=LEXICON_RU['menu_message'], reply_markup=callback_map_admin['menu'])
+    await callback.message.delete()
 
 @router.message(StateFilter(Start.registration), StatusInMessage())
 async def register_start_handler(message: Message, state: FSMContext, status: str) -> None:

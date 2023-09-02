@@ -48,9 +48,9 @@ async def get_themes_for_earn(callback: CallbackQuery, callback_data: MenuCallba
     resume: str = ''
     for task in tasks:
         resume += (
-                "Название: " + task.name +
-                '\nОписание: ' + task.description +
-                "\nТема: " + task.theme +
+                "Название: " + task.task_name +
+                '\nОписание: ' + task.task_description +
+                "\nТема: " + task.task_theme +
                 "\nБаллы за решение: " + str(task.value) + '\n\n'
         )
     await callback.message.edit_text(
@@ -99,14 +99,14 @@ async def get_task_names_for_earn(callback: CallbackQuery, state: FSMContext, se
 async def select_task_to_solve(callback: CallbackQuery, state: FSMContext, session: AsyncSession):
     task = await get_task_by_name(session, callback.data)
     resume = (
-            "Название: " + task.name +
-            '\nОписание: ' + task.description +
-            "\nТема: " + task.theme +
+            "Название: " + task.task_name +
+            '\nОписание: ' + task.task_description +
+            "\nТема: " + task.task_theme +
             "\nБаллы за решение: " + str(task.value)
     )
     await callback.message.edit_text(text=resume, reply_markup=callback_map['task'])
     await state.set_state(Tasks.solve)
-    await state.set_data({'name': task.name, 'score': task.value, 'msg': callback.message})
+    await state.set_data({'name': task.task_name, 'score': task.value, 'msg': callback.message})
 
 
 @router.callback_query(StateFilter(Tasks.solve), F.data == 'solve')

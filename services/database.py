@@ -1,6 +1,6 @@
 from typing import Optional
 
-from sqlalchemy import distinct, not_, exists
+from sqlalchemy import distinct, not_, exists, delete
 from sqlalchemy.sql.elements import and_
 
 from models.base import Base
@@ -163,3 +163,9 @@ async def get_tasks_favorite(session: AsyncSession, user_id: int):
              Task.name == TaskStatus.name)))))
     tasks = result.scalars().all()
     return tasks
+
+async def delete_tasks(session: AsyncSession, uid: int, name: str):
+    await session.execute(delete(Task).where((Task.uid == uid) & (Task.name == name)))
+    await session.execute(delete(TaskStatus).where(
+        (TaskStatus.uid == uid) & (TaskStatus.name == name) & (TaskStatus.status != 'completed')))
+    await session.commit()

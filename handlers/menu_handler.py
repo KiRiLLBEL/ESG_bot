@@ -7,12 +7,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from filters.menu_filters import MenuCallbackFactory
 from keyboards.inline_keyboards import callback_map, create_keyboard_options
 from lexicon.lexicon_ru import LEXICON_RU
-from models.pool import Survey
 from res.photo import PHOTO
 from services.database import get_task_by_name, get_tasks_uid_by_name, \
-    add_score_user, get_user_by_tg_id, get_user_score, add_task_status, get_all_themes_not_completed, get_task_status, \
-    update_status_task, get_tasks_by_theme_not_completed, get_tasks_completed, get_tasks_favorite, \
-    get_all_themes_not_completed_all_tables, get_tasks_and_themes_by_theme_not_completed, get_survey_by_title, \
+    add_score_user, get_user_by_tg_id, get_user_score, add_task_status, get_task_status, \
+    update_status_task, get_all_themes_not_completed_all_tables, get_tasks_and_themes_by_theme_not_completed, \
+    get_survey_by_title, \
     add_survey_complete, get_survey_by_id, get_question_options, get_survey_result, add_survey_result, \
     get_completed_tasks_and_surveys, get_favorite_tasks_and_surveys
 from states.menu_states import Tasks
@@ -95,7 +94,7 @@ async def get_themes_for_earn(callback: CallbackQuery, callback_data: MenuCallba
     )
 
 
-@router.callback_query(MenuCallbackFactory.filter(F.next_keyboard == 'my_score'))
+@router.callback_query(MenuCallbackFactory.filter(F.next_keyboard.in_(['my_score', 'earn_score', 'buy_score', 'pick_tasks'])))
 async def get_themes_for_earn(callback: CallbackQuery, callback_data: MenuCallbackFactory, session: AsyncSession):
     await callback.message.edit_media(
         media=InputMediaPhoto(

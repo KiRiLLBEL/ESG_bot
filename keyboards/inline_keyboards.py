@@ -210,7 +210,7 @@ menu_keyboard = {
             [
                 InlineKeyboardButton(text=LEXICON_RU['b2c']['menu_button5'], callback_data=MenuCallbackFactory(
                     current_keyboard='menu',
-                    next_keyboard="back_quiz"
+                    next_keyboard="none"
                 ).pack())
             ]
         ]
@@ -310,9 +310,6 @@ callback_map = {
                 InlineKeyboardButton(text=LEXICON_RU['template_idea']['button2'], callback_data="none")
             ],
             [
-                InlineKeyboardButton(text=LEXICON_RU['template_idea']['button3'], callback_data="none")
-            ],
-            [
                 InlineKeyboardButton(text=LEXICON_RU['back_button'], callback_data=MenuCallbackFactory(
                     current_keyboard='template_idea',
                     next_keyboard="have_idea"
@@ -342,13 +339,34 @@ callback_map = {
     "what_study": InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                InlineKeyboardButton(text=LEXICON_RU['what_study']['button1'], callback_data="none")
+                InlineKeyboardButton(text=LEXICON_RU['what_study']['button1'], callback_data=MenuCallbackFactory(
+                    current_keyboard='what_study',
+                    next_keyboard="video_course"
+                ).pack())
             ],
             [
-                InlineKeyboardButton(text=LEXICON_RU['what_study']['button2'], callback_data="none")
+                InlineKeyboardButton(text=LEXICON_RU['what_study']['button2'], callback_data=MenuCallbackFactory(
+                    current_keyboard='what_study',
+                    next_keyboard="books"
+                ).pack())
             ],
             [
-                InlineKeyboardButton(text=LEXICON_RU['what_study']['button3'], callback_data="none")
+                InlineKeyboardButton(text=LEXICON_RU['what_study']['button3'], callback_data=MenuCallbackFactory(
+                    current_keyboard='what_study',
+                    next_keyboard="eco_states"
+                ).pack())
+            ],
+            [
+                InlineKeyboardButton(text=LEXICON_RU['what_study']['button4'], callback_data=MenuCallbackFactory(
+                    current_keyboard='what_study',
+                    next_keyboard="for_me"
+                ).pack())
+            ],
+            [
+                InlineKeyboardButton(text=LEXICON_RU['what_study']['button5'], callback_data=MenuCallbackFactory(
+                    current_keyboard='what_study',
+                    next_keyboard="appointment"
+                ).pack())
             ],
             [
                 InlineKeyboardButton(text=LEXICON_RU['back_button'], callback_data=MenuCallbackFactory(
@@ -358,13 +376,69 @@ callback_map = {
             ],
         ]
     ),
+    "video_course": InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text=LEXICON_RU['back_button'], callback_data=MenuCallbackFactory(
+                    current_keyboard='video_course',
+                    next_keyboard="what_study"
+                ).pack())
+            ]
+        ]
+    ),
+    "books": InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text=LEXICON_RU['back_button'], callback_data=MenuCallbackFactory(
+                    current_keyboard='books',
+                    next_keyboard="what_study"
+                ).pack())
+            ]
+        ]
+    ),
+    "eco_states": InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text=LEXICON_RU['back_button'], callback_data=MenuCallbackFactory(
+                    current_keyboard='eco_states',
+                    next_keyboard="what_study"
+                ).pack())
+            ]
+        ]
+    ),
+    "for_me": InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text=LEXICON_RU['back_button'], callback_data=MenuCallbackFactory(
+                    current_keyboard='for_me',
+                    next_keyboard="what_study"
+                ).pack())
+            ]
+        ]
+    ),
+    "appointment": InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text=LEXICON_RU['back_button'], callback_data=MenuCallbackFactory(
+                    current_keyboard='appointment',
+                    next_keyboard="what_study"
+                ).pack())
+            ]
+        ]
+    ),
     "eco_org": InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                InlineKeyboardButton(text=LEXICON_RU['eco_org']['button1'], callback_data="none")
+                InlineKeyboardButton(text=LEXICON_RU['eco_org']['button1'], callback_data=MenuCallbackFactory(
+                    current_keyboard='eco_org',
+                    next_keyboard="poster"
+                ).pack())
             ],
             [
-                InlineKeyboardButton(text=LEXICON_RU['eco_org']['button2'], callback_data="none")
+                InlineKeyboardButton(text=LEXICON_RU['eco_org']['button2'], callback_data=MenuCallbackFactory(
+                    current_keyboard='eco_org',
+                    next_keyboard="produce_meet"
+                ).pack())
             ],
             [
                 InlineKeyboardButton(text=LEXICON_RU['back_button'], callback_data=MenuCallbackFactory(
@@ -372,6 +446,26 @@ callback_map = {
                     next_keyboard="menu_b2c"
                 ).pack())
             ],
+        ]
+    ),
+    "poster": InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text=LEXICON_RU['back_button'], callback_data=MenuCallbackFactory(
+                    current_keyboard='poster',
+                    next_keyboard="eco_org"
+                ).pack())
+            ]
+        ]
+    ),
+    "produce_meet": InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text=LEXICON_RU['back_button'], callback_data=MenuCallbackFactory(
+                    current_keyboard='produce_meet',
+                    next_keyboard="eco_org"
+                ).pack())
+            ]
         ]
     ),
     "have_idea": InlineKeyboardMarkup(

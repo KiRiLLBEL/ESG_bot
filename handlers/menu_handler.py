@@ -2,18 +2,21 @@ from aiogram import Router, F
 from aiogram.filters import StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message, InputMediaPhoto
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from filters.menu_filters import MenuCallbackFactory
-from keyboards.inline_keyboards import callback_map, create_keyboard_options
+from keyboards.inline_keyboards import callback_map, create_keyboard_options, create_pagination_keyboard
 from lexicon.lexicon_ru import LEXICON_RU
+from models.product import Product
 from res.photo import PHOTO
 from services.database import get_task_by_name, get_tasks_uid_by_name, \
     add_score_user, get_user_by_tg_id, get_user_score, add_task_status, get_task_status, \
     update_status_task, get_all_themes_not_completed_all_tables, get_tasks_and_themes_by_theme_not_completed, \
     get_survey_by_title, \
     add_survey_complete, get_survey_by_id, get_question_options, get_survey_result, add_survey_result, \
-    get_completed_tasks_and_surveys, get_favorite_tasks_and_surveys
+    get_completed_tasks_and_surveys, get_favorite_tasks_and_surveys, get_product_by_id, decrease_score, \
+    get_products_as_pages
 from states.menu_states import Tasks
 
 router = Router()
@@ -41,6 +44,59 @@ async def get_themes_for_earn(callback: CallbackQuery, callback_data: MenuCallba
         reply_markup=callback_map[callback_data.next_keyboard](themes)
     )
 
+@router.callback_query(MenuCallbackFactory.filter(F.next_keyboard == 'merch'))
+async def get_products(callback: CallbackQuery, callback_data: MenuCallbackFactory, state: FSMContext,
+                              session: AsyncSession):
+    product = await get_products_as_pages(session, 0, 1)
+    product = product[0]
+    total_products = await session.scalar(select(func.count(Product.id)))
+    total_pages = (total_products + 1 - 1)
+    text = f"Название: {product.name}\nЦена: {product.price}\n\nВаш баланс: {await get_user_score(session, callback.from_user.id)}"
+    await callback.message.answer_photo(
+        photo=product.image_url,
+        caption=text,
+        reply_markup=create_pagination_keyboard(1, total_pages, product)
+    )
+    await callback.message.delete()
+
+@router.callback_query(F.data.startswith('page:'))
+async def handle_page_callback(callback: CallbackQuery, session: AsyncSession):
+    current_page = int(callback.data.split(':')[1])
+    offset = (current_page - 1) * 1
+
+    product = await get_products_as_pages(session, offset, 1)
+    product = product[0]
+    total_products = await session.scalar(select(func.count(Product.id)))
+    total_pages = (total_products + 1 - 1)
+    pagination_keyboard = create_pagination_keyboard(current_page, total_pages, product)
+    text = f"Название: {product.name}\nЦена: {product.price}\n\nВаш баланс: {await get_user_score(session, callback.from_user.id)}"
+    await callback.message.edit_media(media=InputMediaPhoto(
+        media=product.image_url,
+        caption=text),
+        reply_markup=pagination_keyboard
+    )
+
+    if current_page > total_pages:
+        await callback.answer(text='Товары закончились')
+        await callback.message.delete()
+
+@router.callback_query(F.data.startswith('buy:'))
+async def handle_buy_callback(callback: CallbackQuery, session: AsyncSession):
+    product_id = int(callback.data.split(':')[1])
+    product: Product = await get_product_by_id(session, product_id)
+    user = await get_user_by_tg_id(session, callback.from_user.id)
+    if user.score - product.price >= 0:
+        await decrease_score(session, callback.from_user.id, product.price)
+        await callback.answer(text=f'Товар успешно приобретен! Ваш баланс: {await get_user_score(session, callback.from_user.id)}')
+        await callback.message.edit_media(
+            media=InputMediaPhoto(
+                media=PHOTO['buy_score'],
+                caption=LEXICON_RU['buy_score']['message'].format(await get_user_score(session, callback.from_user.id))
+            ),
+            reply_markup=callback_map['buy_score']
+        )
+    else:
+        await callback.answer(text=f'Недостаточно средств: Ваш баланс: {await get_user_score(session, callback.from_user.id)}')
 
 @router.callback_query(MenuCallbackFactory.filter(F.next_keyboard == 'get_favorites'))
 async def get_themes_for_earn(callback: CallbackQuery, callback_data: MenuCallbackFactory, state: FSMContext,

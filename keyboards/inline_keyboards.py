@@ -1,10 +1,9 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-from filters.menu_filters import MenuCallbackFactory, AdminMenuCallbackFactory
 
+from filters.menu_filters import MenuCallbackFactory, AdminMenuCallbackFactory
 from lexicon.lexicon_ru import LEXICON_RU
-from services.database import get_question_options
-from states.admin_states import Admin
+from models.product import Product
 
 
 def keyboard_create_task(themes: list[str]):
@@ -151,6 +150,28 @@ def keyboard_tasks_and_themes(obj):
     )
     return kb_builder.as_markup()
 
+def create_pagination_keyboard(current_page: int, total_pages: int, product: Product):
+    kb_builder: InlineKeyboardBuilder = InlineKeyboardBuilder()
+    buttons: list[InlineKeyboardButton] = []
+
+    if current_page > 1:
+        buttons.append(InlineKeyboardButton(text='⬅️', callback_data=f'page:{current_page - 1}'))
+
+    buttons.append(InlineKeyboardButton(text=f'Страница {current_page} из {total_pages}', callback_data='current_page'))
+
+    if current_page < total_pages:
+        buttons.append(InlineKeyboardButton(text='➡️', callback_data=f'page:{current_page + 1}'))
+
+
+    kb_builder.row(*buttons, width=3)
+    kb_builder.row(InlineKeyboardButton(text='Купить', callback_data=f'buy:{product.id}'), width=1)
+    kb_builder.row(InlineKeyboardButton(text=LEXICON_RU['back_button'], callback_data=MenuCallbackFactory(
+                    current_keyboard='earn_score',
+                    next_keyboard="buy_score"
+                ).pack()), width=1)
+    return kb_builder.as_markup()
+
+
 start_keyboard = InlineKeyboardMarkup(
     inline_keyboard=[
         [
@@ -279,7 +300,10 @@ callback_map = {
     "buy_score": InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                InlineKeyboardButton(text=LEXICON_RU['buy_score']['button1'], callback_data="none")
+                InlineKeyboardButton(text=LEXICON_RU['buy_score']['button1'], callback_data=MenuCallbackFactory(
+                    current_keyboard='buy_score',
+                    next_keyboard="merch"
+                ).pack())
             ],
             [
                 InlineKeyboardButton(text=LEXICON_RU['buy_score']['button2'], callback_data="none")
@@ -585,7 +609,7 @@ callback_map_admin = {
                 InlineKeyboardButton(text=LEXICON_RU['admin']['menu']['button3'],
                                      callback_data=AdminMenuCallbackFactory(
                                          current_keyboard='menu',
-                                         next_keyboard='none').pack())
+                                         next_keyboard='change_product').pack())
             ],
             [
                 InlineKeyboardButton(text=LEXICON_RU['admin']['menu']['button4'],
@@ -672,6 +696,44 @@ callback_map_admin = {
                 InlineKeyboardButton(text=LEXICON_RU['back_button'], callback_data=AdminMenuCallbackFactory(
                     current_keyboard='change_poll',
                     next_keyboard="menu").pack())
+            ]
+        ]
+    ),
+    'change_product': InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text=LEXICON_RU['admin']['change_product']['button1'], callback_data=AdminMenuCallbackFactory(
+                    current_keyboard='change_product',
+                    next_keyboard="create_product").pack())
+            ],
+            [
+                InlineKeyboardButton(text=LEXICON_RU['admin']['change_product']['button2'], callback_data=AdminMenuCallbackFactory(
+                    current_keyboard='change_product',
+                    next_keyboard="none").pack())
+            ],
+            [
+                InlineKeyboardButton(text=LEXICON_RU['admin']['change_product']['button3'], callback_data=AdminMenuCallbackFactory(
+                    current_keyboard='change_product',
+                    next_keyboard="none").pack())
+            ],
+            [
+                InlineKeyboardButton(text=LEXICON_RU['admin']['change_product']['button4'], callback_data=AdminMenuCallbackFactory(
+                    current_keyboard='change_product',
+                    next_keyboard="none").pack())
+            ],
+            [
+                InlineKeyboardButton(text=LEXICON_RU['back_button'], callback_data=AdminMenuCallbackFactory(
+                    current_keyboard='change_product',
+                    next_keyboard="menu").pack())
+            ]
+        ]
+    ),
+    'create_product': InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text=LEXICON_RU['back_button'], callback_data=AdminMenuCallbackFactory(
+                    current_keyboard='create_product',
+                    next_keyboard='change_product').pack())
             ]
         ]
     ),

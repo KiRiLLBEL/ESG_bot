@@ -19,3 +19,7 @@ class Admin(StatesGroup):
     pool_questions = State()
     pool_options = State()
     pool_score = State()
+
+    product_name = State()
+    product_score = State()
+    product_image = State()

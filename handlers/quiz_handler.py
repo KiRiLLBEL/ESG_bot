@@ -2,15 +2,15 @@ from aiogram import F
 from aiogram import Router
 from aiogram.filters import StateFilter
 from aiogram.fsm.context import FSMContext
-from aiogram.types import FSInputFile, InputMediaPhoto
-from aiogram.types import Message, CallbackQuery
+from aiogram.types import CallbackQuery
+from aiogram.types import InputMediaPhoto
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from keyboards.inline_keyboards import menu_keyboard, answer_quiz_keyboard, gift_quiz_keyboard,quiz_get_results_keyboard
-from keyboards.reply_keyboards import remove_keyboard
+from keyboards.inline_keyboards import menu_keyboard, answer_quiz_keyboard, gift_quiz_keyboard, \
+    quiz_get_results_keyboard
 from lexicon.lexicon_ru import LEXICON_RU
 from res.photo import PHOTO
-from services.database import add_answer, get_all_no_quiz_answers, add_score_user, get_user_by_tg_id
+from services.database import add_answer, get_all_no_quiz_answers, add_score_user, get_user_by_tg_id, user_quiz_solved
 from states.start_states import Quiz
 from utils.quiz_utils import calculate_yes_percent
 
@@ -72,5 +72,6 @@ async def return_quiz_result(callback: CallbackQuery, state: FSMContext, session
 async def send_gift(callback: CallbackQuery, state: FSMContext, session: AsyncSession):
     user = await get_user_by_tg_id(session, callback.from_user.id)
     await add_score_user(session, callback.from_user.id, 5)
+    await user_quiz_solved(session, callback.from_user.id)
     await callback.message.edit_media(media=InputMediaPhoto(media=PHOTO['bonus'], caption=f'Вы получили баллы! Ваш баланс: {user.score}\n\n' + LEXICON_RU['menu_message']), reply_markup=menu_keyboard['b2c'])
     await state.clear()

@@ -7,6 +7,7 @@ from sqlalchemy.sql.elements import and_, or_
 from models.base import Base
 from models.pool import Survey, Question, Option
 from models.pool_status import SurveyResult, Answer
+from models.product import Product
 from models.task import Task
 from models.task_status import TaskStatus
 from models.user import User
@@ -290,3 +291,30 @@ async def get_favorite_tasks_and_surveys(session: AsyncSession, user_id: int):
     favorite_surveys = select(Survey.title).where(SurveyResult.user_id == user_id).where(SurveyResult.status == 'favorite').join(SurveyResult, Survey.id == SurveyResult.survey_id)
     result = await session.execute(favorite_tasks.union(favorite_surveys))
     return [(row[0], 'task' if row[0] in [task[0] for task in (await session.execute(favorite_tasks)).fetchall()] else 'survey') for row in result.fetchall()]
+
+async def add_product(session: AsyncSession, name: str, price: int, image_url: str):
+    product = Product(name=name, price=price, image_url=image_url)
+    session.add(product)
+    await session.commit()
+
+async def get_products_as_pages(session: AsyncSession, offset: int, limit: int):
+    result = await session.execute(
+        select(Product).order_by(Product.id).offset(offset).limit(limit)
+    )
+    return result.scalars().all()
+
+async def get_product_by_id(session: AsyncSession, product_id: int):
+    result = await session.execute(select(Product).where(Product.id == product_id))
+    return result.scalar_one_or_none()
+
+async def decrease_score(session: AsyncSession, user_id: int, decrement: int):
+    user = await session.get(User, user_id)
+    if user:
+        user.score -= decrement
+        await session.commit()
+
+async def user_quiz_solved(session: AsyncSession, user_id: int):
+    user = await session.get(User, user_id)
+    if user:
+        user.quiz = True
+        await session.commit()

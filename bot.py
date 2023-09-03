@@ -10,6 +10,8 @@ from handlers import quiz_handler
 from handlers import menu_handler
 from handlers import admin_handler
 from services.database import init_models
+from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram.fsm.storage.redis import RedisStorage, Redis
 
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 
@@ -21,9 +23,11 @@ async def main() -> None:
     engine = create_async_engine(url=config.db, echo=True)
     # await init_models(engine)
     session_maker = async_sessionmaker(engine, expire_on_commit=False)
+    redis_db = Redis(host='localhost')
+    redis_storage = RedisStorage(redis=redis_db)
     bot: Bot = Bot(token=config.tg_bot.token,
                    parse_mode='HTML')
-    dp: Dispatcher = Dispatcher()
+    dp: Dispatcher = Dispatcher(storage=redis_storage)
     quiz_handler.router.message.middleware(UserMiddleware(session_maker))
     quiz_handler.router.callback_query.middleware(UserMiddleware(session_maker))
     start_handler.router.message.middleware(UserMiddleware(session_maker))

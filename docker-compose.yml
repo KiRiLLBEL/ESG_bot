@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  db:
+    container_name: postgres-esg
+    image: postgres:latest
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: esgbot
+    env_file:
+      - ".env"
+    volumes:
+      - postgres-db:/var/lib/postgresql/data
+  bot:
+    container_name: bot
+    build: .
+    env_file:
+      - ".env"
+    depends_on:
+      - "db"
+volumes:
+  postgres-db:

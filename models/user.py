@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, BigInteger, String
+from sqlalchemy import Column, Integer, BigInteger, String, Boolean
 
 from .base import Base
 
@@ -10,3 +10,4 @@ class User(Base):
     name = Column(String)
     status = Column(String)
     score = Column(Integer, default=0)
+    quiz = Column(Boolean)

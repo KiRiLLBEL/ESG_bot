@@ -2,14 +2,15 @@ from aiogram import F
 from aiogram import Router
 from aiogram.filters import StateFilter
 from aiogram.fsm.context import FSMContext
-from aiogram.types import FSInputFile
+from aiogram.types import FSInputFile, InputMediaPhoto
 from aiogram.types import Message, CallbackQuery
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from keyboards.inline_keyboards import menu_keyboard, answer_quiz_keyboard, gift_quiz_keyboard
-from keyboards.reply_keyboards import remove_keyboard, quiz_get_results_keyboard
+from keyboards.inline_keyboards import menu_keyboard, answer_quiz_keyboard, gift_quiz_keyboard,quiz_get_results_keyboard
+from keyboards.reply_keyboards import remove_keyboard
 from lexicon.lexicon_ru import LEXICON_RU
-from services.database import add_answer, get_all_no_quiz_answers, add_score_user
+from res.photo import PHOTO
+from services.database import add_answer, get_all_no_quiz_answers, add_score_user, get_user_by_tg_id
 from states.start_states import Quiz
 from utils.quiz_utils import calculate_yes_percent
 
@@ -32,45 +33,44 @@ async def quiz_check(callback: CallbackQuery, state: FSMContext, session: AsyncS
     if current_index + 1 < len(LEXICON_RU[status]['quiz_questions']):
         next_index = current_index + 1
         await state.update_data(status=status, index=next_index)
-        await callback.message.edit_text(
-            text=LEXICON_RU[status]['quiz_questions'][next_index],
+        await callback.message.edit_caption(
+            caption=LEXICON_RU[status]['quiz_questions'][next_index],
             reply_markup=answer_quiz_keyboard
         )
     else:
         await state.set_state(Quiz.result)
         await state.set_data({'status': status})
-        await callback.message.answer(LEXICON_RU['quiz_get_result'], reply_markup=quiz_get_results_keyboard)
-        await callback.message.delete()
+        await callback.message.edit_caption(caption=LEXICON_RU['quiz_get_result'], reply_markup=quiz_get_results_keyboard)
 
 
-@router.message(StateFilter(Quiz.result), F.text == LEXICON_RU['quiz_get_result_button'])
-async def return_quiz_result(message: Message, state: FSMContext, session: AsyncSession):
+@router.callback_query(StateFilter(Quiz.result), F.data == 'get_result')
+async def return_quiz_result(callback: CallbackQuery, state: FSMContext, session: AsyncSession):
     data = await state.get_data()
     status = data.get('status', '')
-    yes_percent = await calculate_yes_percent(session, message.from_user.id, status)
-    await message.answer(text=LEXICON_RU[status]['quiz_result'].format(yes_percent), reply_markup=remove_keyboard)
-    results = await get_all_no_quiz_answers(session, message.from_user.id)
+    yes_percent = await calculate_yes_percent(session, callback.from_user.id, status)
+    text = LEXICON_RU[status]['quiz_result'].format(yes_percent) + '\n'
+    results = await get_all_no_quiz_answers(session, callback.from_user.id)
     if not results:
-        await message.answer(text=LEXICON_RU[status]['quiz_success'])
+        text += LEXICON_RU[status]['quiz_success'] + '\n'
     else:
         advice: str = "Советы:\n"
         cnt: int = 1
         for result in results:
             advice += str(cnt) + '. ' + LEXICON_RU[status]['quiz_advices'][result.question_index] + '\n'
             cnt += 1
-        await message.answer(text=advice)
-    if status == 'b2c':
+        text += advice + '\n'
+    user = await get_user_by_tg_id(session, callback.from_user.id)
+    if status == 'b2c' and not user.quiz:
         await state.set_state(Quiz.gift)
-        await message.answer(text=LEXICON_RU['b2c']['quiz_gift'], reply_markup=gift_quiz_keyboard)
+        await callback.message.edit_caption(caption=text + LEXICON_RU['b2c']['quiz_gift'], reply_markup=gift_quiz_keyboard)
     else:
         await state.clear()
-        await message.answer(text=LEXICON_RU['menu_message'], reply_markup=menu_keyboard['b2b'])
+        await callback.message.edit_caption(caption=LEXICON_RU['menu_message'], reply_markup=menu_keyboard['b2b'])
 
 
 @router.callback_query(StateFilter(Quiz.gift), F.data == 'gift')
 async def send_gift(callback: CallbackQuery, state: FSMContext, session: AsyncSession):
-    await callback.message.answer_photo(photo=FSInputFile("res/bonus.png"), caption="Вы получили баллы!")
-    await callback.message.answer(text=LEXICON_RU['menu_message'], reply_markup=menu_keyboard['b2c'])
+    user = await get_user_by_tg_id(session, callback.from_user.id)
     await add_score_user(session, callback.from_user.id, 5)
-    await callback.message.delete()
+    await callback.message.edit_media(media=InputMediaPhoto(media=PHOTO['bonus'], caption=f'Вы получили баллы! Ваш баланс: {user.score}\n\n' + LEXICON_RU['menu_message']), reply_markup=menu_keyboard['b2c'])
     await state.clear()

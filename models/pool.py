@@ -1,15 +1,15 @@
-from sqlalchemy import create_engine, Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
-from sqlalchemy.ext.declarative import declarative_base
 
-Base = declarative_base()
+from .base import Base
 
 class Survey(Base):
     __tablename__ = 'surveys'
     id = Column(Integer, primary_key=True)
     title = Column(String)
     theme = Column(String)
-    questions = relationship('Question', back_populates='survey')
+    score = Column(Integer)
+    questions = relationship('Question', back_populates='survey', lazy='joined')
 
 class Question(Base):
     __tablename__ = 'questions'
@@ -17,7 +17,7 @@ class Question(Base):
     text = Column(String)
     survey_id = Column(Integer, ForeignKey('surveys.id'))
     survey = relationship('Survey', back_populates='questions')
-    options = relationship('Option', back_populates='question')
+    options = relationship('Option', back_populates='question', lazy='joined')
 
 class Option(Base):
     __tablename__ = 'options'

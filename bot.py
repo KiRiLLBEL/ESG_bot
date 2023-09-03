@@ -19,7 +19,7 @@ logging.basicConfig(level=logging.DEBUG)
 async def main() -> None:
     config: Config = load_config()
     engine = create_async_engine(url=config.db, echo=True)
-    await init_models(engine)
+    # await init_models(engine)
     session_maker = async_sessionmaker(engine, expire_on_commit=False)
     bot: Bot = Bot(token=config.tg_bot.token,
                    parse_mode='HTML')

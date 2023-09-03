@@ -4,6 +4,7 @@ services:
   db:
     container_name: postgres-esg
     image: postgres:latest
+    restart: always
     ports:
       - "5432:5432"
     environment:
@@ -13,12 +14,24 @@ services:
       - ".env"
     volumes:
       - postgres-db:/var/lib/postgresql/data
+  redis:
+    container_name: redis-esg
+    image: redis:latest
+    restart: always
+    ports:
+      - '6379:6379'
+    command: redis-server --save 20 1 --loglevel warning
+    volumes:
+      - redis:/var/lib/redis/data
   bot:
     container_name: bot
     build: .
+    restart: always
     env_file:
       - ".env"
     depends_on:
       - "db"
+      - 'redis'
 volumes:
   postgres-db:
+  redis:

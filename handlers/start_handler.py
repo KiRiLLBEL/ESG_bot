@@ -1,4 +1,4 @@
-from aiogram import F
+from aiogram import F, Bot
 from aiogram import Router
 from aiogram.filters import StateFilter
 from aiogram.filters.command import CommandStart
@@ -7,7 +7,6 @@ from aiogram.types import Message, ContentType, CallbackQuery
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from keyboards.inline_keyboards import menu_keyboard, answer_quiz_keyboard, callback_map_admin, start_keyboard
-from keyboards.reply_keyboards import remove_keyboard
 from lexicon.lexicon_ru import LEXICON_RU
 from res.photo import PHOTO
 from services.database import get_user_by_tg_id, register_user, delete_quiz
@@ -53,18 +52,18 @@ async def picked_user(callback: CallbackQuery, state: FSMContext):
 async def register_start_handler(callback: CallbackQuery, state: FSMContext) -> None:
     await state.set_state(register_state[callback.data])
     await callback.message.edit_caption(caption=LEXICON_RU[callback.data]['register_message'])
-    await state.set_data({'msg': callback.message})
+    await state.set_data({'msg': callback.message.message_id})
 
 
 @router.message(StateFilter(register_state['b2b']), F.content_type == ContentType.TEXT)
 @router.message(StateFilter(register_state['b2c']), F.content_type == ContentType.TEXT)
-async def register_handler(message: Message, state: FSMContext, session: AsyncSession) -> None:
+async def register_handler(message: Message, state: FSMContext, session: AsyncSession, bot: Bot) -> None:
     data = await state.get_data()
-    msg = data.get('msg')
+    msg = data['msg']
     status = 'b2b' if await state.get_state() == Start.registration_b2b else 'b2c'
     await register_user(session=session, user_id=message.from_user.id, name=message.text, score=0, status=status, quiz=False)
     text = LEXICON_RU['registration_complete'] + '\n' + LEXICON_RU[status]['quiz_start'] + '\n' + LEXICON_RU[status]['quiz_questions'][0]
-    await msg.edit_caption(caption=text, reply_markup=answer_quiz_keyboard)
+    await bot.edit_message_caption(chat_id=message.from_user.id, message_id=msg, caption=text, reply_markup=answer_quiz_keyboard)
     await state.set_state(Quiz.activate)
     await delete_quiz(session, message.from_user.id)
     await state.set_data({'status': status, 'index': 0})

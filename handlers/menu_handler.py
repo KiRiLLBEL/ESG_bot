@@ -1,4 +1,4 @@
-from aiogram import Router, F
+from aiogram import Router, F, Bot
 from aiogram.filters import StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message, InputMediaPhoto
@@ -48,6 +48,9 @@ async def get_themes_for_earn(callback: CallbackQuery, callback_data: MenuCallba
 async def get_products(callback: CallbackQuery, callback_data: MenuCallbackFactory, state: FSMContext,
                               session: AsyncSession):
     product = await get_products_as_pages(session, 0, 1)
+    if product == []:
+        await callback.answer('Нет доступных товаров')
+        return
     product = product[0]
     total_products = await session.scalar(select(func.count(Product.id)))
     total_pages = (total_products + 1 - 1)
@@ -206,7 +209,7 @@ async def select_task_to_solve(callback: CallbackQuery, state: FSMContext, sessi
     )
     await callback.message.edit_text(text=resume, reply_markup=callback_map['task'])
     await state.set_state(Tasks.solve)
-    await state.set_data({'name': task.name, 'score': task.value, 'msg': callback.message})
+    await state.set_data({'name': task.name, 'score': task.value, 'msg': callback.message.message_id})
 
 
 @router.callback_query(StateFilter(Tasks.tasks), F.data.startswith('survey_'))
@@ -297,11 +300,11 @@ async def favorite_solve(callback: CallbackQuery, state: FSMContext, session: As
 
 
 @router.message(StateFilter(Tasks.solve), F.text.isdigit())
-async def select_task_to_solve(message: Message, state: FSMContext, session: AsyncSession):
+async def select_task_to_solve(message: Message, state: FSMContext, session: AsyncSession, bot: Bot):
     data = await state.get_data()
     name = data.get('name', '')
     score = data.get('score', 0)
-    msg: Message = data.get('msg')
+    msg = data.get('msg')
     uid = await get_tasks_uid_by_name(session, name)
     if int(message.text) == uid:
         await state.clear()
@@ -319,18 +322,17 @@ async def select_task_to_solve(message: Message, state: FSMContext, session: Asy
         else:
             await update_status_task(session, message.from_user.id, name, uid, 'completed')
 
-        await msg.answer_photo(photo=PHOTO['menu_b2c'], caption=f'Задание успешно выполнено! Ваш баланс {user.score}',
+        await bot.send_photo(chat_id=message.from_user.id, photo=PHOTO['menu_b2c'], caption=f'Задание успешно выполнено! Ваш баланс {user.score}',
                                reply_markup=callback_map['menu_b2c'])
     else:
-        await msg.edit_text(text="К сожалению, ваш ключ не совпадает, попробуйте еще раз",
+        await bot.edit_message_text(message_id=msg, chat_id=message.from_user.id, text="К сожалению, ваш ключ не совпадает, попробуйте еще раз",
                             reply_markup=callback_map['task'])
     await message.delete()
 
 
 @router.message(StateFilter(Tasks.solve))
-async def select_task_to_solve(message: Message, state: FSMContext):
+async def select_task_to_solve(message: Message, state: FSMContext, bot: Bot):
     data = await state.get_data()
     msg = data.get('msg')
-    if msg.text != "Пожалуйста, введите ключ":
-        await msg.edit_text(text="Пожалуйста, введите ключ", reply_markup=callback_map['task'])
+    await bot.edit_message_text(message_id=msg, chat_id=message.from_user.id,text="Пожалуйста, введите ключ", reply_markup=callback_map['task'])
     await message.delete()

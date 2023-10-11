@@ -1,7 +1,6 @@
 from typing import Optional
 
 from sqlalchemy import distinct, not_, exists, delete, union
-from sqlalchemy.orm import selectinload
 from sqlalchemy.sql.elements import and_, or_
 
 from models.base import Base
@@ -18,7 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 async def init_models(engine: AsyncEngine):
     async with engine.begin() as conn:
-        # await conn.run_sync(Base.metadata.drop_all)
+        await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
 
 

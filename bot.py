@@ -5,10 +5,9 @@ from aiogram import Bot, Dispatcher
 from config_data.config import Config, load_config
 from keyboards.set_menu import set_main_menu
 from middlewares.user_middleware import UserMiddleware, BotMiddleware
-from handlers import start_handler
+from handlers import start_handler, admin_handler
 from handlers import quiz_handler
 from handlers import menu_handler
-from handlers import admin_handler
 from services.database import init_models
 from aiogram.fsm.storage.redis import RedisStorage, Redis
 
@@ -23,7 +22,7 @@ async def main() -> None:
     engine = create_async_engine(url=config.db, echo=True)
     await init_models(engine)
     session_maker = async_sessionmaker(engine, expire_on_commit=False)
-    redis_db = Redis(host=config.redis_host, port=int(config.redis_port), db=0)
+    redis_db = Redis(host=config.redis_host)
     redis_storage = RedisStorage(redis=redis_db)
     bot = Bot(token=config.tg_bot.token,
                    parse_mode='HTML')

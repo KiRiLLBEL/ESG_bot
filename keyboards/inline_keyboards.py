@@ -631,20 +631,6 @@ callback_map_admin = {
             ],
         ]
     ),
-    'poll_option': InlineKeyboardMarkup(
-        inline_keyboard=[
-            [
-                InlineKeyboardButton(text="Завершить вопрос", callback_data="end_options")
-            ]
-        ]
-    ),
-    'poll_question': InlineKeyboardMarkup(
-        inline_keyboard=[
-            [
-                InlineKeyboardButton(text="Завершить опрос", callback_data="end_questions")
-            ]
-        ]
-    ),
     'change_task': InlineKeyboardMarkup(
         inline_keyboard=[
             [
@@ -691,6 +677,12 @@ callback_map_admin = {
                                      callback_data=AdminMenuCallbackFactory(
                                          current_keyboard='change_poll',
                                          next_keyboard="none").pack())
+            ],
+            [
+                InlineKeyboardButton(text=LEXICON_RU['admin']['change_poll']['button4'],
+                                     callback_data=AdminMenuCallbackFactory(
+                                         current_keyboard='change_poll',
+                                         next_keyboard="change_main_poll").pack())
             ],
             [
                 InlineKeyboardButton(text=LEXICON_RU['back_button'], callback_data=AdminMenuCallbackFactory(
@@ -740,5 +732,34 @@ callback_map_admin = {
     'create_task': keyboard_create_task,
     'get_task': keyboard_get_task,
     'delete_task': keyboard_get_task,
-    'create_poll': keyboard_create_poll
+    'create_poll': keyboard_create_poll,
+    'change_main_poll': InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text=LEXICON_RU['admin']['change_main_poll']['button1'], callback_data='b2c')
+            ],
+            [
+                InlineKeyboardButton(text=LEXICON_RU['admin']['change_main_poll']['button2'], callback_data='b2b')
+            ],
+            [
+                InlineKeyboardButton(text=LEXICON_RU['back_button'], callback_data=AdminMenuCallbackFactory(
+                    current_keyboard='change_main_poll',
+                    next_keyboard='change_poll').pack())
+            ]
+        ]
+    ),
+    'Admin:pool_options': InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text="Завершить вопрос", callback_data="end_options")
+            ]
+        ]
+    ),
+    'Admin:pool_questions': InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text="Завершить опрос", callback_data="end_questions")
+            ]
+        ]
+    )
 }

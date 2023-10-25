@@ -6,10 +6,11 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, ContentType, CallbackQuery
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from keyboards.inline_keyboards import menu_keyboard, answer_quiz_keyboard, callback_map_admin, start_keyboard
+from keyboards.inline_keyboards import menu_keyboard, callback_map_admin, start_keyboard, \
+    create_keyboard_options
 from lexicon.lexicon_ru import LEXICON_RU
 from res.photo import PHOTO
-from services.database import get_user_by_tg_id, register_user, delete_quiz
+from services.database import get_user_by_tg_id, register_user, get_first_unattempted_survey
 from states.start_states import Start, Quiz, register_state
 from states.admin_states import Admin
 from config_data.config import load_config
@@ -39,7 +40,7 @@ async def picked_user(callback: CallbackQuery, state: FSMContext, session: Async
         await state.set_state(Start.registration)
         await callback.message.answer_photo(photo=PHOTO['register'], caption=LEXICON_RU['register'].format(callback.from_user.first_name), reply_markup=start_keyboard)
     else:
-        await callback.message.answer_photo(photo=PHOTO['menu_b2c'], caption=LEXICON_RU[user.status]['return'].format(user.name), reply_markup=menu_keyboard[user.status])
+        await callback.message.answer_photo(photo=PHOTO['menu_b2c'], caption=LEXICON_RU[user.status]['return'].format(user.username), reply_markup=menu_keyboard[user.status])
     await callback.message.delete()
 
 @router.callback_query(StateFilter(Admin.pick), F.data == 'pick_admin')
@@ -55,16 +56,23 @@ async def register_start_handler(callback: CallbackQuery, state: FSMContext) -> 
     await state.set_data({'msg': callback.message.message_id})
 
 
-@router.message(StateFilter(register_state['b2b']), F.content_type == ContentType.TEXT)
-@router.message(StateFilter(register_state['b2c']), F.content_type == ContentType.TEXT)
+@router.message(StateFilter(register_state['business']), F.content_type == ContentType.TEXT)
+@router.message(StateFilter(register_state['person']), F.content_type == ContentType.TEXT)
 async def register_handler(message: Message, state: FSMContext, session: AsyncSession, bot: Bot) -> None:
     data = await state.get_data()
     msg = data['msg']
-    status = 'b2b' if await state.get_state() == Start.registration_b2b else 'b2c'
-    await register_user(session=session, user_id=message.from_user.id, name=message.text, score=0, status=status, quiz=False)
-    text = LEXICON_RU['registration_complete'] + '\n' + LEXICON_RU[status]['quiz_start'] + '\n' + LEXICON_RU[status]['quiz_questions'][0]
-    await bot.edit_message_caption(chat_id=message.from_user.id, message_id=msg, caption=text, reply_markup=answer_quiz_keyboard)
+    status = 'business' if await state.get_state() == Start.registration_b2b else 'person'
+    await register_user(session=session, user_id=message.from_user.id, username=message.text, score=0, status=status, level=0)
+    survey = await get_first_unattempted_survey(session, message.from_user.id, status)
+    questions = survey.questions
+    question = questions[0]
+    options = question.options
     await state.set_state(Quiz.activate)
-    await delete_quiz(session, message.from_user.id)
-    await state.set_data({'status': status, 'index': 0})
+    await state.set_data({
+        'survey_id': survey.survey_id,
+        'answers': [],
+        'idx': 0
+    })
+    await bot.edit_message_caption(chat_id=message.from_user.id, message_id=msg, caption=question.text, reply_markup=create_keyboard_options(options))
     await message.delete()
+

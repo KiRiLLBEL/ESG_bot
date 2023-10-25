@@ -6,14 +6,14 @@ from lexicon.lexicon_ru import LEXICON_RU
 from models.product import Product
 
 
-def keyboard_create_task(themes: list[str]):
+def keyboard_create_task(themes):
     kb_builder: InlineKeyboardBuilder = InlineKeyboardBuilder()
     buttons: list[InlineKeyboardButton] = []
     if themes:
         for button in themes:
             buttons.append(InlineKeyboardButton(
-                text=button,
-                callback_data=button)
+                text=button.title,
+                callback_data=f'{button.theme_id}')
             )
     kb_builder.row(*buttons, width=1)
     kb_builder.row(InlineKeyboardButton(
@@ -22,99 +22,222 @@ def keyboard_create_task(themes: list[str]):
     kb_builder.row(InlineKeyboardButton(
         text=LEXICON_RU['back_button'],
         callback_data=AdminMenuCallbackFactory(
-            current_keyboard='create_task',
+            current_keyboard='back',
             next_keyboard="change_task"
         ).pack()
     )
     )
     return kb_builder.as_markup()
 
-
-def keyboard_create_poll(themes: list[str]):
+def keyboard_create_event(themes):
     kb_builder: InlineKeyboardBuilder = InlineKeyboardBuilder()
     buttons: list[InlineKeyboardButton] = []
     if themes:
         for button in themes:
             buttons.append(InlineKeyboardButton(
-                text=button,
-                callback_data=button)
+                text=button.title,
+                callback_data=f'{button.event_theme_id}')
             )
     kb_builder.row(*buttons, width=1)
     kb_builder.row(InlineKeyboardButton(
-        text=LEXICON_RU['admin']['create_poll']['button1'],
+        text=LEXICON_RU['admin']['create_event']['button1'],
         callback_data='create_theme'))
     kb_builder.row(InlineKeyboardButton(
         text=LEXICON_RU['back_button'],
         callback_data=AdminMenuCallbackFactory(
-            current_keyboard='create_poll',
-            next_keyboard="change_poll"
+            current_keyboard='back',
+            next_keyboard="change_event"
         ).pack()
     )
     )
     return kb_builder.as_markup()
 
+
+def keyboard_create_survey(themes):
+    kb_builder: InlineKeyboardBuilder = InlineKeyboardBuilder()
+    buttons: list[InlineKeyboardButton] = []
+    if themes:
+        for button in themes:
+            buttons.append(InlineKeyboardButton(
+                text=button.title,
+                callback_data=str(button.theme_id))
+            )
+    kb_builder.row(*buttons, width=1)
+    kb_builder.row(InlineKeyboardButton(
+        text=LEXICON_RU['admin']['create_survey']['button1'],
+        callback_data='create_theme'))
+    kb_builder.row(InlineKeyboardButton(
+        text=LEXICON_RU['back_button'],
+        callback_data=AdminMenuCallbackFactory(
+            current_keyboard='back',
+            next_keyboard="change_survey"
+        ).pack()
+    )
+    )
+    return kb_builder.as_markup()
+
+def keyboard_survey_pagination(current_page, total_pages, question):
+    kb_builder: InlineKeyboardBuilder = InlineKeyboardBuilder()
+    buttons: list[InlineKeyboardButton] = [InlineKeyboardButton(text=f"Изменить ответ №{i + 1}", callback_data=f'opt:{option.option_id}') for i, option in enumerate(question.options)]
+    line: list[InlineKeyboardButton] = []
+    kb_builder.row(InlineKeyboardButton(text='Изменить вопрос', callback_data=f'que:{question.question_id}'), width=1)
+    if current_page > 1:
+        line.append(InlineKeyboardButton(text='⬅️', callback_data=f'page:{current_page - 1}'))
+
+    line.append(InlineKeyboardButton(text=f'Вопрос {current_page} из {total_pages}', callback_data='current_page'))
+
+    if current_page < total_pages:
+        line.append(InlineKeyboardButton(text='➡️', callback_data=f'page:{current_page + 1}'))
+
+    kb_builder.row(*buttons, width=1)
+    kb_builder.row(*line, width=3)
+    kb_builder.row(InlineKeyboardButton(text=LEXICON_RU['back_button'], callback_data=AdminMenuCallbackFactory(
+        current_keyboard='back',
+        next_keyboard="change_survey"
+    ).pack()), width=1)
+    return kb_builder.as_markup()
+
+def keyboard_get_surveys(surveys):
+    kb_builder: InlineKeyboardBuilder = InlineKeyboardBuilder()
+    buttons: list[InlineKeyboardButton] = []
+    if surveys:
+        for button in surveys:
+            buttons.append(InlineKeyboardButton(
+                text=button.title,
+                callback_data=str(button.survey_id))
+            )
+    kb_builder.row(*buttons, width=1)
+    kb_builder.row(InlineKeyboardButton(
+        text=LEXICON_RU['back_button'],
+        callback_data=AdminMenuCallbackFactory(
+            current_keyboard='back',
+            next_keyboard="change_survey"
+        ).pack()
+    )
+    )
+    return kb_builder.as_markup()
+
+
+
+def keyboard_survey_themes(themes):
+    kb_builder: InlineKeyboardBuilder = InlineKeyboardBuilder()
+    buttons: list[InlineKeyboardButton] = []
+    if themes:
+        for button in themes:
+            buttons.append(InlineKeyboardButton(
+                text=button.title,
+                callback_data=str(button.theme_id))
+            )
+    kb_builder.row(*buttons, width=1)
+    kb_builder.row(InlineKeyboardButton(
+        text=LEXICON_RU['back_button'],
+        callback_data=AdminMenuCallbackFactory(
+            current_keyboard='back',
+            next_keyboard="change_survey"
+        ).pack()
+    )
+    )
+    return kb_builder.as_markup()
+
+def keyboard_poster_pagination(current_page, total_pages, event):
+    kb_builder: InlineKeyboardBuilder = InlineKeyboardBuilder()
+    line: list[InlineKeyboardButton] = []
+    if current_page > 1:
+        line.append(InlineKeyboardButton(text='⬅️', callback_data=f'evpage:{current_page - 1}'))
+
+    line.append(InlineKeyboardButton(text=f'Мероприятие {current_page} из {total_pages}', callback_data='current_page_ev'))
+
+    if current_page < total_pages:
+        line.append(InlineKeyboardButton(text='➡️', callback_data=f'evpage:{current_page + 1}'))
+
+    kb_builder.row(*line, width=3)
+    kb_builder.row(InlineKeyboardButton(text="Добавить в избранное", callback_data="favorites_event"), width=1)
+    kb_builder.row(InlineKeyboardButton(text=LEXICON_RU['back_button'], callback_data=MenuCallbackFactory(
+        current_keyboard='back',
+        next_keyboard="eco_org"
+    ).pack()), width=1)
+    return kb_builder.as_markup()
+
+def keyboard_fav_event_pagination(current_page, total_pages, event):
+    kb_builder: InlineKeyboardBuilder = InlineKeyboardBuilder()
+    line: list[InlineKeyboardButton] = []
+    if current_page > 1:
+        line.append(InlineKeyboardButton(text='⬅️', callback_data=f'evfpage:{current_page - 1}'))
+
+    line.append(InlineKeyboardButton(text=f'Мероприятие {current_page} из {total_pages}', callback_data='current_page_ev'))
+
+    if current_page < total_pages:
+        line.append(InlineKeyboardButton(text='➡️', callback_data=f'evfpage:{current_page + 1}'))
+
+    kb_builder.row(*line, width=3)
+    kb_builder.row(InlineKeyboardButton(text=LEXICON_RU['back_button'], callback_data=MenuCallbackFactory(
+        current_keyboard='back',
+        next_keyboard="eco_org"
+    ).pack()), width=1)
+    return kb_builder.as_markup()
+
+
 def create_keyboard_options(options):
     kb_builder: InlineKeyboardBuilder = InlineKeyboardBuilder()
     buttons: list[InlineKeyboardButton] = []
     for option in options:
-        button = InlineKeyboardButton(text=option[0],
-                                      callback_data=f'answer_{option[1]}')
+        button = InlineKeyboardButton(text=option.text,
+                                      callback_data=f'{option.option_id}')
         buttons.append(button)
     kb_builder.row(*buttons, width=1)
 
     return kb_builder.as_markup()
 
 
-def keyboard_get_task(themes: list[str]):
+def keyboard_get_task(tasks):
     kb_builder: InlineKeyboardBuilder = InlineKeyboardBuilder()
     buttons: list[InlineKeyboardButton] = []
-    if themes:
-        for button in themes:
+    if tasks:
+        for button in tasks:
             buttons.append(InlineKeyboardButton(
-                text=button,
-                callback_data=button)
+                text=button.title,
+                callback_data=str(button.task_id))
             )
     kb_builder.row(*buttons, width=1)
     kb_builder.row(InlineKeyboardButton(
         text=LEXICON_RU['back_button'],
         callback_data=AdminMenuCallbackFactory(
-            current_keyboard='get_task',
+            current_keyboard='back',
             next_keyboard="change_task"
         ).pack()
     )
     )
     return kb_builder.as_markup()
 
-
-def keyboard_delete_task(themes: list[str]):
+def keyboard_get_themes(themes):
     kb_builder: InlineKeyboardBuilder = InlineKeyboardBuilder()
     buttons: list[InlineKeyboardButton] = []
     if themes:
         for button in themes:
             buttons.append(InlineKeyboardButton(
-                text=button,
-                callback_data=button)
+                text=button.title,
+                callback_data=str(button.theme_id))
             )
     kb_builder.row(*buttons, width=1)
     kb_builder.row(InlineKeyboardButton(
         text=LEXICON_RU['back_button'],
         callback_data=AdminMenuCallbackFactory(
-            current_keyboard='delete_task',
-            next_keyboard="change_task"
+            current_keyboard='back',
+            next_keyboard='change_task'
         ).pack()
     )
     )
     return kb_builder.as_markup()
 
 
-def keyboard_get_themes_earn(themes: list[str]):
+def keyboard_get_themes_earn(themes):
     kb_builder: InlineKeyboardBuilder = InlineKeyboardBuilder()
     buttons: list[InlineKeyboardButton] = []
     if themes:
         for button in themes:
             buttons.append(InlineKeyboardButton(
-                text=button,
-                callback_data=button)
+                text=button.title,
+                callback_data=f'{button.theme_id}')
             )
         kb_builder.row(*buttons, width=1)
     kb_builder.row(InlineKeyboardButton(
@@ -133,9 +256,10 @@ def keyboard_tasks_and_themes(obj):
     buttons: list[InlineKeyboardButton] = []
     if obj:
         for button in obj:
+            print(obj)
             buttons.append(InlineKeyboardButton(
-                text=button[0] + ' (задание)' if button[1] == 'task' else button[0] + ' (опрос)',
-                callback_data=button[1] + "_" + button[0]
+                text=button[0].title + ' (задание)' if button[1] == 'task' else button[0].title + ' (опрос)',
+                callback_data=button[1] + "_" + str(button[0].task_id if button[1] == 'task' else button[0].survey_id)
             )
             )
             print(button[0], button[1])
@@ -164,7 +288,7 @@ def create_pagination_keyboard(current_page: int, total_pages: int, product: Pro
 
 
     kb_builder.row(*buttons, width=3)
-    kb_builder.row(InlineKeyboardButton(text='Купить', callback_data=f'buy:{product.id}'), width=1)
+    kb_builder.row(InlineKeyboardButton(text='Купить', callback_data=f'buy:{product.product_id}'), width=1)
     kb_builder.row(InlineKeyboardButton(text=LEXICON_RU['back_button'], callback_data=MenuCallbackFactory(
                     current_keyboard='earn_score',
                     next_keyboard="buy_score"
@@ -175,8 +299,8 @@ def create_pagination_keyboard(current_page: int, total_pages: int, product: Pro
 start_keyboard = InlineKeyboardMarkup(
     inline_keyboard=[
         [
-            InlineKeyboardButton(text=LEXICON_RU['start_b2c'], callback_data='b2c'),
-            InlineKeyboardButton(text=LEXICON_RU['start_b2b'], callback_data='b2b')
+            InlineKeyboardButton(text=LEXICON_RU['start_b2c'], callback_data='person'),
+            InlineKeyboardButton(text=LEXICON_RU['start_b2b'], callback_data='business')
         ]
     ]
 )
@@ -190,46 +314,46 @@ quiz_get_results_keyboard = InlineKeyboardMarkup(
 )
 
 menu_keyboard = {
-    'b2b': InlineKeyboardMarkup(
+    'business': InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                InlineKeyboardButton(text=LEXICON_RU['b2b']['menu_button1'], callback_data="none")
+                InlineKeyboardButton(text=LEXICON_RU['business']['menu_button1'], callback_data="none")
             ],
             [
-                InlineKeyboardButton(text=LEXICON_RU['b2b']['menu_button2'], callback_data="none")
+                InlineKeyboardButton(text=LEXICON_RU['business']['menu_button2'], callback_data="none")
             ],
             [
-                InlineKeyboardButton(text=LEXICON_RU['b2b']['menu_button3'], callback_data="none")
+                InlineKeyboardButton(text=LEXICON_RU['business']['menu_button3'], callback_data="none")
             ],
             [
-                InlineKeyboardButton(text=LEXICON_RU['b2b']['menu_button4'], callback_data="none")
+                InlineKeyboardButton(text=LEXICON_RU['business']['menu_button4'], callback_data="none")
             ]
         ]
     ),
-    'b2c': InlineKeyboardMarkup(
+    'person': InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                InlineKeyboardButton(text=LEXICON_RU['b2c']['menu_button1'], callback_data=MenuCallbackFactory(
+                InlineKeyboardButton(text=LEXICON_RU['person']['menu_button1'], callback_data=MenuCallbackFactory(
                     current_keyboard='menu',
                     next_keyboard="my_score"
                 ).pack()),
-                InlineKeyboardButton(text=LEXICON_RU['b2c']['menu_button2'], callback_data=MenuCallbackFactory(
+                InlineKeyboardButton(text=LEXICON_RU['person']['menu_button2'], callback_data=MenuCallbackFactory(
                     current_keyboard='menu',
                     next_keyboard="what_study"
                 ).pack())
             ],
             [
-                InlineKeyboardButton(text=LEXICON_RU['b2c']['menu_button3'], callback_data=MenuCallbackFactory(
+                InlineKeyboardButton(text=LEXICON_RU['person']['menu_button3'], callback_data=MenuCallbackFactory(
                     current_keyboard='menu',
                     next_keyboard="eco_org"
                 ).pack()),
-                InlineKeyboardButton(text=LEXICON_RU['b2c']['menu_button4'], callback_data=MenuCallbackFactory(
+                InlineKeyboardButton(text=LEXICON_RU['person']['menu_button4'], callback_data=MenuCallbackFactory(
                     current_keyboard='menu',
                     next_keyboard="have_idea"
                 ).pack())
             ],
             [
-                InlineKeyboardButton(text=LEXICON_RU['b2c']['menu_button5'], callback_data=MenuCallbackFactory(
+                InlineKeyboardButton(text=LEXICON_RU['person']['menu_button5'], callback_data=MenuCallbackFactory(
                     current_keyboard='menu',
                     next_keyboard="none"
                 ).pack())
@@ -465,6 +589,12 @@ callback_map = {
                 ).pack())
             ],
             [
+                InlineKeyboardButton(text=LEXICON_RU['eco_org']['button3'], callback_data=MenuCallbackFactory(
+                    current_keyboard='eco_org',
+                    next_keyboard="get_favorite_events"
+                ).pack())
+            ],
+            [
                 InlineKeyboardButton(text=LEXICON_RU['back_button'], callback_data=MenuCallbackFactory(
                     current_keyboard='eco_org',
                     next_keyboard="menu_b2c"
@@ -472,16 +602,8 @@ callback_map = {
             ],
         ]
     ),
-    "poster": InlineKeyboardMarkup(
-        inline_keyboard=[
-            [
-                InlineKeyboardButton(text=LEXICON_RU['back_button'], callback_data=MenuCallbackFactory(
-                    current_keyboard='poster',
-                    next_keyboard="eco_org"
-                ).pack())
-            ]
-        ]
-    ),
+    "poster": keyboard_poster_pagination,
+    "get_favorite_events": keyboard_fav_event_pagination,
     "produce_meet": InlineKeyboardMarkup(
         inline_keyboard=[
             [
@@ -536,7 +658,7 @@ callback_map = {
             ],
             [
                 InlineKeyboardButton(text=LEXICON_RU['back_button'], callback_data=MenuCallbackFactory(
-                    current_keyboard='pick_tasks',
+                    current_keyboard='back',
                     next_keyboard="earn_score").pack()
                                      )
             ]
@@ -574,8 +696,8 @@ callback_map = {
         ]
     ),
     'tasks': keyboard_tasks_and_themes,
-    'menu_b2c': menu_keyboard['b2c'],
-    'menu_b2b': menu_keyboard['b2b']
+    'menu_b2c': menu_keyboard['person'],
+    'menu_b2b': menu_keyboard['business']
 }
 
 callback_map_admin = {
@@ -602,7 +724,7 @@ callback_map_admin = {
                 InlineKeyboardButton(text=LEXICON_RU['admin']['menu']['button2'],
                                      callback_data=AdminMenuCallbackFactory(
                                          current_keyboard='menu',
-                                         next_keyboard='change_poll').pack()
+                                         next_keyboard='change_survey').pack()
                                      )
             ],
             [
@@ -615,7 +737,7 @@ callback_map_admin = {
                 InlineKeyboardButton(text=LEXICON_RU['admin']['menu']['button4'],
                                      callback_data=AdminMenuCallbackFactory(
                                          current_keyboard='menu',
-                                         next_keyboard='none').pack())
+                                         next_keyboard='change_event').pack())
             ],
             [
                 InlineKeyboardButton(text=LEXICON_RU['admin']['menu']['button5'],
@@ -643,50 +765,38 @@ callback_map_admin = {
                 InlineKeyboardButton(text=LEXICON_RU['admin']['change_task']['button2'],
                                      callback_data=AdminMenuCallbackFactory(
                                          current_keyboard='change_task',
-                                         next_keyboard="get_task").pack())
-            ],
-            [
-                InlineKeyboardButton(text=LEXICON_RU['admin']['change_task']['button3'],
-                                     callback_data=AdminMenuCallbackFactory(
-                                         current_keyboard='change_task',
-                                         next_keyboard="delete_task").pack())
+                                         next_keyboard='edit_task').pack())
             ],
             [
                 InlineKeyboardButton(text=LEXICON_RU['back_button'], callback_data=AdminMenuCallbackFactory(
-                    current_keyboard='change_task',
+                    current_keyboard='back',
                     next_keyboard="menu").pack())
             ]
         ]
     ),
-    'change_poll': InlineKeyboardMarkup(
+    'change_survey': InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                InlineKeyboardButton(text=LEXICON_RU['admin']['change_poll']['button1'],
+                InlineKeyboardButton(text=LEXICON_RU['admin']['change_survey']['button1'],
                                      callback_data=AdminMenuCallbackFactory(
-                                         current_keyboard='change_poll',
-                                         next_keyboard="create_poll").pack())
+                                         current_keyboard='change_survey',
+                                         next_keyboard='create_survey').pack())
             ],
             [
-                InlineKeyboardButton(text=LEXICON_RU['admin']['change_poll']['button2'],
+                InlineKeyboardButton(text=LEXICON_RU['admin']['change_survey']['button2'],
                                      callback_data=AdminMenuCallbackFactory(
-                                         current_keyboard='change_poll',
-                                         next_keyboard="none").pack())
+                                         current_keyboard='change_survey',
+                                         next_keyboard="get_survey_themes").pack())
             ],
             [
-                InlineKeyboardButton(text=LEXICON_RU['admin']['change_poll']['button3'],
+                InlineKeyboardButton(text=LEXICON_RU['admin']['change_survey']['button3'],
                                      callback_data=AdminMenuCallbackFactory(
-                                         current_keyboard='change_poll',
-                                         next_keyboard="none").pack())
-            ],
-            [
-                InlineKeyboardButton(text=LEXICON_RU['admin']['change_poll']['button4'],
-                                     callback_data=AdminMenuCallbackFactory(
-                                         current_keyboard='change_poll',
-                                         next_keyboard="change_main_poll").pack())
+                                         current_keyboard='change_survey',
+                                         next_keyboard="change_main_survey").pack())
             ],
             [
                 InlineKeyboardButton(text=LEXICON_RU['back_button'], callback_data=AdminMenuCallbackFactory(
-                    current_keyboard='change_poll',
+                    current_keyboard='back',
                     next_keyboard="menu").pack())
             ]
         ]
@@ -715,47 +825,144 @@ callback_map_admin = {
             ],
             [
                 InlineKeyboardButton(text=LEXICON_RU['back_button'], callback_data=AdminMenuCallbackFactory(
-                    current_keyboard='change_product',
+                    current_keyboard='back',
                     next_keyboard="menu").pack())
             ]
         ]
     ),
+    'change_event': InlineKeyboardMarkup(
+          inline_keyboard=[
+              [
+                  InlineKeyboardButton(text=LEXICON_RU['admin']['change_event']['button1'], callback_data=AdminMenuCallbackFactory(
+                        current_keyboard='change_event',
+                        next_keyboard="create_event").pack())
+              ],
+              [
+                  InlineKeyboardButton(text=LEXICON_RU['admin']['change_event']['button2'], callback_data=AdminMenuCallbackFactory(
+                        current_keyboard='change_event',
+                        next_keyboard="none").pack())
+              ],
+              [
+                    InlineKeyboardButton(text=LEXICON_RU['back_button'], callback_data=AdminMenuCallbackFactory(
+                        current_keyboard='back',
+                        next_keyboard='menu').pack())
+              ]
+          ]
+    ),
+    'create_event': keyboard_create_event,
     'create_product': InlineKeyboardMarkup(
         inline_keyboard=[
             [
                 InlineKeyboardButton(text=LEXICON_RU['back_button'], callback_data=AdminMenuCallbackFactory(
-                    current_keyboard='create_product',
+                    current_keyboard='back',
                     next_keyboard='change_product').pack())
             ]
         ]
     ),
     'create_task': keyboard_create_task,
-    'get_task': keyboard_get_task,
-    'delete_task': keyboard_get_task,
-    'create_poll': keyboard_create_poll,
-    'change_main_poll': InlineKeyboardMarkup(
+    'get_themes':keyboard_get_themes,
+    'edit_task': keyboard_get_task,
+    'create_survey': keyboard_create_survey,
+    'get_survey_themes': keyboard_survey_themes,
+    'edit_survey': keyboard_get_surveys,
+    'edit_question': InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                InlineKeyboardButton(text=LEXICON_RU['admin']['change_main_poll']['button1'], callback_data='b2c')
+                InlineKeyboardButton(text="Изменить текст вопроса", callback_data="edit_question")
             ],
             [
-                InlineKeyboardButton(text=LEXICON_RU['admin']['change_main_poll']['button2'], callback_data='b2b')
+                InlineKeyboardButton(text="Удалить вопрос", callback_data="delete_question")
             ],
             [
                 InlineKeyboardButton(text=LEXICON_RU['back_button'], callback_data=AdminMenuCallbackFactory(
-                    current_keyboard='change_main_poll',
-                    next_keyboard='change_poll').pack())
+                        current_keyboard='back',
+                        next_keyboard="change_survey"
+                    ).pack())
             ]
         ]
     ),
-    'Admin:pool_options': InlineKeyboardMarkup(
+    'edit_option': InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text="Изменить текст ответа", callback_data="edit_option")
+            ],
+            [
+                InlineKeyboardButton(text="Удалить ответ", callback_data="delete_option")
+            ],
+            [
+                InlineKeyboardButton(text=LEXICON_RU['back_button'], callback_data=AdminMenuCallbackFactory(
+                        current_keyboard='back',
+                        next_keyboard="change_survey"
+                ).pack())
+            ]
+        ]
+    ),
+    'task_choose_edit': InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text="Измените задание", callback_data=AdminMenuCallbackFactory(
+                    current_keyboard='task_choose_edit',
+                    next_keyboard='task_editor').pack())
+            ],
+            [
+                InlineKeyboardButton(text="Удалить задание", callback_data=AdminMenuCallbackFactory(
+                    current_keyboard='task_choose_edit',
+                    next_keyboard='menu').pack())
+            ],
+            [
+                InlineKeyboardButton(text=LEXICON_RU['back_button'], callback_data=AdminMenuCallbackFactory(
+                    current_keyboard='back',
+                    next_keyboard='change_task').pack())
+            ]
+        ]
+    ),
+    'task_editor': InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text="Изменить название", callback_data=AdminMenuCallbackFactory(
+                    current_keyboard='task_editor',
+                    next_keyboard='change_task_title').pack())
+            ],
+            [
+                InlineKeyboardButton(text="Изменить баллы за задание", callback_data=AdminMenuCallbackFactory(
+                    current_keyboard='task_editor',
+                    next_keyboard='change_task_value').pack())
+            ],
+            [
+                InlineKeyboardButton(text="Изменить описание задания", callback_data=AdminMenuCallbackFactory(
+                    current_keyboard='task_editor',
+                    next_keyboard='change_task_description').pack())
+            ],
+            [
+                InlineKeyboardButton(text=LEXICON_RU['back_button'], callback_data=AdminMenuCallbackFactory(
+                    current_keyboard='back',
+                    next_keyboard='task_choose_edit').pack())
+            ]
+        ]
+    ),
+    'change_main_survey': InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text=LEXICON_RU['admin']['change_main_survey']['button1'], callback_data='person')
+            ],
+            [
+                InlineKeyboardButton(text=LEXICON_RU['admin']['change_main_survey']['button2'], callback_data='business')
+            ],
+            [
+                InlineKeyboardButton(text=LEXICON_RU['back_button'], callback_data=AdminMenuCallbackFactory(
+                    current_keyboard='back',
+                    next_keyboard='change_survey').pack())
+            ]
+        ]
+    ),
+    'Admin:survey_options': InlineKeyboardMarkup(
         inline_keyboard=[
             [
                 InlineKeyboardButton(text="Завершить вопрос", callback_data="end_options")
             ]
         ]
     ),
-    'Admin:pool_questions': InlineKeyboardMarkup(
+    'Admin:survey_questions': InlineKeyboardMarkup(
         inline_keyboard=[
             [
                 InlineKeyboardButton(text="Завершить опрос", callback_data="end_questions")

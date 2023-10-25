@@ -30,7 +30,7 @@ async def add_name_product(message: Message,  state: FSMContext, bot: Bot):
     await message.delete()
 
 
-@router.message(StateFilter(Admin.product_image), F.content_type == ContentType.TEXT)
+@router.message(StateFilter(Admin.product_image), F.content_type == ContentType.TEXT, F.text.regexp(r'http(s)?://\S+'))
 async def add_name_product(message: Message,  state: FSMContext, bot: Bot, session: AsyncSession):
     data = await state.get_data()
     msg = data.get('msg')

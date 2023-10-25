@@ -8,8 +8,8 @@ class Start(StatesGroup):
 
 
 register_state = {
-    'b2b': Start.registration_b2b,
-    'b2c': Start.registration_b2c
+    'business': Start.registration_b2b,
+    'person': Start.registration_b2c
 }
 
 

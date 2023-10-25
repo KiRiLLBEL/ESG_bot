@@ -5,12 +5,12 @@ from aiogram import Bot, Dispatcher
 from config_data.config import Config, load_config
 from keyboards.set_menu import set_main_menu
 from middlewares.user_middleware import UserMiddleware, BotMiddleware
-from handlers import start_handler, admin_handler
+from handlers import start_handler
+from handlers import admin_handler
 from handlers import quiz_handler
 from handlers import menu_handler
 from services.database import init_models
 from aiogram.fsm.storage.redis import RedisStorage, Redis
-
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 
 logging.basicConfig(level=logging.DEBUG)

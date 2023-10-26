@@ -330,17 +330,8 @@ async def get_unattempted_themes(session: AsyncSession, user_id: int):
     ).filter(
         Theme.title != "main",
         or_(
-            and_(
-                Task.users_tasks.any(),
-                or_(UserTask.status == 'favorite', UserTask.status == 'active')
-            ),
-            and_(
-                Survey.users_survey.any(),
-                or_(UserSurvey.status == 'favorite', UserSurvey.status == 'active'),
-                Survey.type.notin_(['business', 'person'])
-            ),
-            Task.users_tasks == None,
-            Survey.users_survey == None
+            exists().where(Task.theme_id == Theme.theme_id),
+            exists().where(Survey.theme_id == Theme.theme_id)
         )
     )
 

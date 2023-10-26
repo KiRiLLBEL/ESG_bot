@@ -29,6 +29,7 @@ async def command_start_handler(message: Message, state: FSMContext, session: As
         await state.set_state(Start.registration)
         await message.answer_photo(photo=PHOTO['register'], caption=LEXICON_RU['register'].format(message.from_user.first_name), reply_markup=start_keyboard)
     else:
+        await state.clear()
         await message.answer(text=LEXICON_RU[user.status]['return'].format(user.name), reply_markup=menu_keyboard[user.status])
 
 

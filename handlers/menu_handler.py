@@ -101,8 +101,9 @@ async def handle_page_callback(callback: CallbackQuery, state: FSMContext, sessi
     await callback.message.answer_photo(
         photo=event.image_url,
         caption=text,
-        reply_markup=callback_map['poster'](1, total_events, event)
+        reply_markup=callback_map['poster'](current_page, total_events, event)
     )
+    await callback.message.delete()
 
 @router.callback_query(F.data.startswith('page:'))
 async def handle_page_callback(callback: CallbackQuery, session: AsyncSession):
@@ -111,10 +112,10 @@ async def handle_page_callback(callback: CallbackQuery, session: AsyncSession):
 
     product = await get_products_as_pages(session, offset, 1)
     product = product[0]
-    total_products = await session.scalar(select(func.count(Product.id)))
+    total_products = await session.scalar(select(func.count(Product.product_id)))
     total_pages = (total_products + 1 - 1)
     pagination_keyboard = create_pagination_keyboard(current_page, total_pages, product)
-    text = f"Название: {product.name}\nЦена: {product.price}\n\nВаш баланс: {await get_user_score(session, callback.from_user.id)}"
+    text = f"Название: {product.title}\nЦена: {product.price}\n\nВаш баланс: {await get_user_score(session, callback.from_user.id)}"
     await callback.message.edit_media(media=InputMediaPhoto(
         media=product.image_url,
         caption=text),
@@ -126,13 +127,15 @@ async def handle_page_callback(callback: CallbackQuery, session: AsyncSession):
         await callback.message.delete()
 
 @router.callback_query(F.data.startswith('buy:'))
-async def handle_buy_callback(callback: CallbackQuery, session: AsyncSession):
+async def handle_buy_callback(callback: CallbackQuery, session: AsyncSession, bot: Bot):
     product_id = int(callback.data.split(':')[1])
     product: Product = await get_product_by_id(session, product_id)
     user = await get_user_by_tg_id(session, callback.from_user.id)
     if user.score - product.price >= 0:
         await decrease_score(session, callback.from_user.id, product.price)
         await callback.answer(text=f'Товар успешно приобретен! Ваш баланс: {await get_user_score(session, callback.from_user.id)}')
+        text = f'Пользователь {callback.from_user.username} купил товар {product.title}'
+        await bot.send_message(5482433377, text)
         await callback.message.edit_media(
             media=InputMediaPhoto(
                 media=PHOTO['buy_score'],
@@ -175,6 +178,7 @@ async def get_themes_for_earn(callback: CallbackQuery, callback_data: MenuCallba
         caption=text,
         reply_markup=callback_map['get_favorite_events'](1, total_events, event)
     )
+    await callback.message.delete()
 
 @router.callback_query(F.data.startswith('evfpage:'))
 async def handle_page_callback(callback: CallbackQuery, state: FSMContext, session: AsyncSession):
@@ -187,8 +191,9 @@ async def handle_page_callback(callback: CallbackQuery, state: FSMContext, sessi
     await callback.message.answer_photo(
         photo=event.image_url,
         caption=text,
-        reply_markup=callback_map['get_favorite_events'](1, total_events, event)
+        reply_markup=callback_map['get_favorite_events'](current_page, total_events, event)
     )
+    await callback.message.delete()
 
 @router.callback_query(MenuCallbackFactory.filter(F.next_keyboard == 'get_completed'))
 async def get_themes_for_earn(callback: CallbackQuery, callback_data: MenuCallbackFactory, state: FSMContext,
